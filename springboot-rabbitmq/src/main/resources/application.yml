@@ -8,3 +8,8 @@ spring:
     username: guest
     password: guest
     port: 5672
+
+    #发布消息 交换机回调函数
+    publisher-confirm-type: correlated
+    #发布消息 失败回退消息
+    publisher-returns: true

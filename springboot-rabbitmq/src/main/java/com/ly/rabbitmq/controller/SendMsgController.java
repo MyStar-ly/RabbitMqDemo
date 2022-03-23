@@ -1,6 +1,6 @@
 package com.ly.rabbitmq.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import com.ly.rabbitmq.config.DelayedQueueConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -30,7 +30,9 @@ public class SendMsgController {
 
 
     /**
-     * 发送一个延迟消息
+     * 发送一个消息到延迟队列
+     *
+     * @param message
      */
     @GetMapping("/sendMsg/{message}")
     public void sendMsg(@PathVariable String message) {
@@ -40,6 +42,44 @@ public class SendMsgController {
         rabbitTemplate.convertAndSend("X", "XA", "消息来自ttl为10s的队列：" + message);
         rabbitTemplate.convertAndSend("X", "XB", "消息来自ttl为40s的队列：" + message);
 
+    }
+
+
+    /**
+     * 发送一个延迟消息
+     *
+     * @param message
+     * @param time
+     */
+    @GetMapping("/sendDelayedMsg/{message}/{time}")
+    public void sendDelayedMsg(@PathVariable String message, @PathVariable String time) {
+        log.info("当前时间：{} ---> 发送一个时间为：{} 的消息到队列QC：{}", new Date().toString(), time, message);
+        rabbitTemplate.convertAndSend("X", "XC", message, msg -> {
+            //发送消息的时候 延迟时长
+            msg.getMessageProperties().setExpiration(time);
+            return msg;
+        });
+    }
+
+
+    /**
+     * 基于插件的延迟队列
+     *
+     * @param message
+     * @param time
+     */
+    @GetMapping("/sendMsg/{message}/{time}")
+    public void sendMsg(@PathVariable String message, @PathVariable Integer time) {
+        log.info("当前时间：{} ---> 发送一个时间为：{} 的延时消息到延时队列delayed.queue：{}", new Date().toString(), time.toString(), message);
+
+        rabbitTemplate.convertAndSend(
+                DelayedQueueConfig.DELAYED_EXCHANGE_NAME,
+                DelayedQueueConfig.DELAYED_ROUTING_KEY,
+                message,
+                msg -> {
+                    msg.getMessageProperties().setDelay(time);
+                    return msg;
+                });
     }
 
 }

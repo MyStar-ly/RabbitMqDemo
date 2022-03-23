@@ -38,6 +38,11 @@ public class TtlQueueConfig {
      */
     private final static String DEAD_LETTER_QUEUE = "QD";
 
+    /**
+     * 普通队列 QC
+     */
+    private final static String QUEUE_C = "QC";
+
 
     /**
      * 声明 普通队列交换机
@@ -149,5 +154,30 @@ public class TtlQueueConfig {
         return BindingBuilder.bind(queue).to(exchange).with("YD");
     }
 
+
+    /**
+     * 声明 普通队列QC
+     * @return
+     */
+    @Bean("queueC")
+    public Queue queueC() {
+        HashMap<String, Object> arguments = new HashMap<>(3);
+        //声明当前队列绑定的死信交换机
+        arguments.put("x-dead-letter-exchange", Y_DEAD_LETTER_EXCHANGE);
+        //声明当前队列的死信路由key
+        arguments.put("x-dead-letter-routing-key", "YD");
+        return QueueBuilder.durable(QUEUE_C).withArguments(arguments).build();
+    }
+
+
+    /**
+     * 队列C 绑定交换机
+     * @return
+     */
+    @Bean
+    public Binding queuecBindingX(@Qualifier("queueC") Queue queue,
+                                  @Qualifier("xExchange") DirectExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with("XC");
+    }
 
 }
